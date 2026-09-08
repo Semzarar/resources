@@ -35,6 +35,12 @@
                         <child>
                           <object class="ResGraphBox" id="swap"/>
                         </child>
+                        <child>
+                          <object class="ResGraphBox" id="cached"/>
+                        </child>
+                        <child>
+                          <object class="ResGraphBox" id="total"/>
+                        </child>
                       </object>
                     </child>
                     <child>

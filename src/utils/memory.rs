@@ -46,6 +46,12 @@ static RE_SWAP_TOTAL: Lazy<Regex> = lazy_regex!(r"SwapTotal:\s*(\d*) kB");
 
 static RE_SWAP_FREE: Lazy<Regex> = lazy_regex!(r"SwapFree:\s*(\d*) kB");
 
+static RE_MEM_FREE: Lazy<Regex> = lazy_regex!(r"MemFree:\s*(\d*) kB");
+
+static RE_CACHED: Lazy<Regex> = lazy_regex!(r"(?m)^Cached:\s*(\d*) kB");
+
+static RE_BUFFERS: Lazy<Regex> = lazy_regex!(r"Buffers:\s*(\d*) kB");
+
 static RE_NUM_MEMORY_DEVICES: Lazy<Regex> = lazy_regex!(r"MEMORY_ARRAY_NUM_DEVICES=(\d*)");
 
 #[derive(Debug, Clone, Copy)]
@@ -54,6 +60,8 @@ pub struct MemoryData {
     pub available_mem: usize,
     pub total_swap: usize,
     pub free_swap: usize,
+    pub free_mem: usize,
+    pub cached_mem: usize,
 }
 
 impl MemoryData {
@@ -127,11 +135,63 @@ impl MemoryData {
                     })
             })?;
 
+        let free_mem = RE_MEM_FREE
+            .captures(&proc_mem)
+            .context("RE_MEM_FREE no captures")
+            .and_then(|captures| {
+                captures
+                    .get(1)
+                    .context("RE_MEM_FREE not enough captures")
+                    .and_then(|capture| {
+                        capture
+                            .as_str()
+                            .parse::<usize>()
+                            .context("unable to parse MemFree")
+                            .map(|int| int.saturating_mul(1024))
+                    })
+            })?;
+
+        let cached = RE_CACHED
+            .captures(&proc_mem)
+            .context("RE_CACHED no captures")
+            .and_then(|captures| {
+                captures
+                    .get(1)
+                    .context("RE_CACHED not enough captures")
+                    .and_then(|capture| {
+                        capture
+                            .as_str()
+                            .parse::<usize>()
+                            .context("unable to parse Cached")
+                            .map(|int| int.saturating_mul(1024))
+                    })
+            })?;
+
+        let buffers = RE_BUFFERS
+            .captures(&proc_mem)
+            .context("RE_BUFFERS no captures")
+            .and_then(|captures| {
+                captures
+                    .get(1)
+                    .context("RE_BUFFERS not enough captures")
+                    .and_then(|capture| {
+                        capture
+                            .as_str()
+                            .parse::<usize>()
+                            .context("unable to parse Buffers")
+                            .map(|int| int.saturating_mul(1024))
+                    })
+            })?;
+
+        let cached_mem = cached.saturating_add(buffers);
+
         let memory_data = Self {
             total_mem,
             available_mem,
             total_swap,
             free_swap,
+            free_mem,
+            cached_mem,
         };
 
         trace!("Gathered memory data: {memory_data:?}");

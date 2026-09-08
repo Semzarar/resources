@@ -31,6 +31,10 @@ mod imp {
         #[template_child]
         pub swap: TemplateChild<ResGraphBox>,
         #[template_child]
+        pub cached: TemplateChild<ResGraphBox>,
+        #[template_child]
+        pub total: TemplateChild<ResGraphBox>,
+        #[template_child]
         pub authentication_banner: TemplateChild<adw::Banner>,
         #[template_child]
         pub properties: TemplateChild<adw::PreferencesGroup>,
@@ -90,6 +94,8 @@ mod imp {
             Self {
                 memory: Default::default(),
                 swap: Default::default(),
+                cached: Default::default(),
+                total: Default::default(),
                 authentication_banner: Default::default(),
                 properties: Default::default(),
                 slots_used: Default::default(),
@@ -197,6 +203,12 @@ impl ResMemory {
         imp.swap.set_title_label(&i18n("Swap"));
         imp.swap.graph().set_graph_color(0x94, 0x29, 0x7c);
 
+        imp.cached.set_title_label(&i18n("Cached"));
+        imp.cached.graph().set_graph_color(0x26, 0xa2, 0x69);
+
+        imp.total.set_title_label(&i18n("Total"));
+        imp.total.graph().set_graph_color(0xe0, 0x1b, 0x24);
+
         if let Ok(memory_devices) = MemoryDevice::get() {
             self.setup_properties(memory_devices);
         } else {
@@ -301,16 +313,25 @@ impl ResMemory {
             available_mem,
             total_swap,
             free_swap,
+            free_mem,
+            cached_mem,
         } = memdata;
 
         let used_mem = total_mem.saturating_sub(available_mem);
         let used_swap = total_swap.saturating_sub(free_swap);
+        let full_used_mem = total_mem.saturating_sub(free_mem);
 
         imp.memory
             .add_storage_point(Some(used_mem as u64), Some(total_mem as u64));
 
         imp.swap
             .add_storage_point(Some(used_swap as u64), Some(total_swap as u64));
+
+        imp.cached
+            .add_storage_point(Some(cached_mem as u64), Some(total_mem as u64));
+
+        imp.total
+            .add_storage_point(Some(full_used_mem as u64), Some(total_mem as u64));
 
         let memory_fraction = used_mem as f64 / total_mem as f64;
 
