@@ -1,3 +1,14 @@
+## Changes in This Fork
+
+Added cached memory and total memory usage graphs to the Memory page for better visibility into RAM usage.
+
+This fork is not and will not be maintained. it exists as a one off reference for anyone who wants the same feature. Feel free to copy the changes into your own build.
+
+**Changed files:**
+- `src/utils/memory.rs`
+- `src/ui/pages/memory.rs`
+- `data/resources/ui/pages/memory.ui`
+
 # ⚠️ Resources is now part of [GNOME Incubator](https://gitlab.gnome.org/GNOME/Incubator/resources)! All further development and discussion will happen on GNOME GitLab
 
 ---
